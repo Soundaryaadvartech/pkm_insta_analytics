@@ -21,37 +21,37 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 BASE_URL = os.getenv("BASE_URL")
-BLT_ACCESS_TOKEN = os.getenv("BLT_ACCESS_TOKEN")
-BLT_INSTAGRAM_ACCOUNT_ID = os.getenv("BLT_INSTAGRAM_ACCOUNT_ID")
+PKM_ACCESS_TOKEN = os.getenv("PKM_ACCESS_TOKEN")
+PKM_INSTAGRAM_ACCOUNT_ID = os.getenv("PKM_INSTAGRAM_ACCOUNT_ID")
 APP_ID = os.getenv("META_APP_ID")
 APP_SECRET = os.getenv("META_APP_SECRET")
 LONG_LIVED_TOKEN = os.getenv("LONG_LIVED_TOKEN")
 
-@router.get("/fetch_insights_blt")
-def fetch_insights_blt(db: Session = Depends(get_db)):
+@router.get("/fetch_insights_pkm")
+def fetch_insights_pkm(db: Session = Depends(get_db)):
     """
     Fetch a summarized version of Instagram insights, showing only important metrics.
     Automatically refreshes access token if needed.
     """
     try:
-        global BLT_ACCESS_TOKEN
+        global PKM_ACCESS_TOKEN
 
         # Refresh the short-lived token
-        if is_access_token_expired(BLT_ACCESS_TOKEN):
+        if is_access_token_expired(PKM_ACCESS_TOKEN):
             try:
                 refreshed_token = refresh_access_token(APP_ID, APP_SECRET, LONG_LIVED_TOKEN)
-                set_key('.env', 'BLT_ACCESS_TOKEN', refreshed_token)
+                set_key('.env', 'PKM_ACCESS_TOKEN', refreshed_token)
                 load_dotenv()
-                BLT_ACCESS_TOKEN = os.getenv("BLT_ACCESS_TOKEN")
+                PKM_ACCESS_TOKEN = os.getenv("PKM_ACCESS_TOKEN")
             except Exception as e:
                 try:
                     new_long_lived_token = generate_new_long_lived_token()
                     set_key('.env', 'LONG_LIVED_TOKEN', new_long_lived_token)
                     load_dotenv()
-                    new_blt_access_token = refresh_access_token(APP_ID, APP_SECRET, new_long_lived_token)
-                    set_key('.env', 'BLT_ACCESS_TOKEN', new_blt_access_token)
+                    new_pkm_access_token = refresh_access_token(APP_ID, APP_SECRET, new_long_lived_token)
+                    set_key('.env', 'PKM_ACCESS_TOKEN', new_pkm_access_token)
                     load_dotenv()
-                    BLT_ACCESS_TOKEN = os.getenv("BLT_ACCESS_TOKEN")
+                    PKM_ACCESS_TOKEN = os.getenv("PKM_ACCESS_TOKEN")
                 except Exception as gen_error:
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -63,7 +63,7 @@ def fetch_insights_blt(db: Session = Depends(get_db)):
                 )
 
         # Fetch Instagram account details
-        account_url = f"{BASE_URL}{BLT_INSTAGRAM_ACCOUNT_ID}?fields=id,username,followers_count&access_token={BLT_ACCESS_TOKEN}"
+        account_url = f"{BASE_URL}{PKM_INSTAGRAM_ACCOUNT_ID}?fields=id,username,followers_count&access_token={PKM_ACCESS_TOKEN}"
         account_response = requests.get(account_url, timeout=120)
 
         if account_response.status_code != 200:
@@ -74,7 +74,7 @@ def fetch_insights_blt(db: Session = Depends(get_db)):
         account_data = account_response.json()
 
         # Fetch insights
-        insights_url = f"{BASE_URL}{BLT_INSTAGRAM_ACCOUNT_ID}/insights?metric=reach,accounts_engaged,website_clicks&period=day&metric_type=total_value&access_token={BLT_ACCESS_TOKEN}"
+        insights_url = f"{BASE_URL}{PKM_INSTAGRAM_ACCOUNT_ID}/insights?metric=reach,accounts_engaged,website_clicks&period=day&metric_type=total_value&access_token={PKM_ACCESS_TOKEN}"
         insights_response = requests.get(insights_url, timeout=120)
 
         if insights_response.status_code != 200:
@@ -168,22 +168,22 @@ def fetch_insights_blt(db: Session = Depends(get_db)):
 @router.get("/engaged_audience_demographics")
 def engaged_audience_demographics(db: Session = Depends(get_db)):
     try:
-        global BLT_ACCESS_TOKEN
+        global PKM_ACCESS_TOKEN
 
         # Refresh the short-lived token
-        if is_access_token_expired(BLT_ACCESS_TOKEN):
+        if is_access_token_expired(PKM_ACCESS_TOKEN):
             try:
                 refreshed_token = refresh_access_token(APP_ID, APP_SECRET, LONG_LIVED_TOKEN)
-                set_key('.env', 'BLT_ACCESS_TOKEN', refreshed_token)
+                set_key('.env', 'PKM_ACCESS_TOKEN', refreshed_token)
                 load_dotenv()  # Reload the updated .env file
-                BLT_ACCESS_TOKEN = os.getenv("BLT_ACCESS_TOKEN")  # Get updated token
+                PKM_ACCESS_TOKEN = os.getenv("PKM_ACCESS_TOKEN")  # Get updated token
             except Exception as e:
                 try:
                     new_long_lived_token = generate_new_long_lived_token()
                     set_key('.env', 'LONG_LIVED_TOKEN', new_long_lived_token)
                     load_dotenv()  # Reload the updated .env file
-                    BLT_ACCESS_TOKEN = refresh_access_token(APP_ID, APP_SECRET, new_long_lived_token)
-                    set_key('.env', 'BLT_ACCESS_TOKEN', BLT_ACCESS_TOKEN)
+                    PKM_ACCESS_TOKEN = refresh_access_token(APP_ID, APP_SECRET, new_long_lived_token)
+                    set_key('.env', 'PKM_ACCESS_TOKEN', PKM_ACCESS_TOKEN)
                     load_dotenv()  # Reload the updated .env file
                 except Exception as gen_error:
                     raise HTTPException(
@@ -196,13 +196,13 @@ def engaged_audience_demographics(db: Session = Depends(get_db)):
                 )
 
         # Define the API URLs
-        insights_url = f"{BASE_URL}{BLT_INSTAGRAM_ACCOUNT_ID}/insights"
+        insights_url = f"{BASE_URL}{PKM_INSTAGRAM_ACCOUNT_ID}/insights"
         params = {
             "metric": "engaged_audience_demographics",
             "period": "lifetime",
             "timeframe": "this_week",
             "metric_type": "total_value",
-            "access_token": BLT_ACCESS_TOKEN,
+            "access_token": PKM_ACCESS_TOKEN,
         }
 
         # Fetch demographic data by breakdown types
@@ -327,26 +327,26 @@ def engaged_audience_demographics(db: Session = Depends(get_db)):
 @router.get("/fetch_all_posts")
 async def fetch_all_posts(db: Session = Depends(get_db)):
     try:
-        global BLT_ACCESS_TOKEN
+        global PKM_ACCESS_TOKEN
 
         # Refresh the short-lived token if expired
-        if is_access_token_expired(BLT_ACCESS_TOKEN):
+        if is_access_token_expired(PKM_ACCESS_TOKEN):
             try:
                 refreshed_token = refresh_access_token(APP_ID, APP_SECRET, LONG_LIVED_TOKEN)
-                os.environ["BLT_ACCESS_TOKEN"] = refreshed_token
-                BLT_ACCESS_TOKEN = refreshed_token
+                os.environ["PKM_ACCESS_TOKEN"] = refreshed_token
+                PKM_ACCESS_TOKEN = refreshed_token
             except Exception:
                 new_long_lived_token = generate_new_long_lived_token()
                 os.environ["LONG_LIVED_TOKEN"] = new_long_lived_token
-                BLT_ACCESS_TOKEN = refresh_access_token(APP_ID, APP_SECRET, new_long_lived_token)
-                os.environ["BLT_ACCESS_TOKEN"] = BLT_ACCESS_TOKEN
+                PKM_ACCESS_TOKEN = refresh_access_token(APP_ID, APP_SECRET, new_long_lived_token)
+                os.environ["PKM_ACCESS_TOKEN"] = PKM_ACCESS_TOKEN
 
         # Fetch all posts
         all_posts = []
-        posts_url = f"{BASE_URL}{BLT_INSTAGRAM_ACCOUNT_ID}/media"
+        posts_url = f"{BASE_URL}{PKM_INSTAGRAM_ACCOUNT_ID}/media"
         params = {
             "fields": "id,media_type,media_url,timestamp",
-            "access_token": BLT_ACCESS_TOKEN,
+            "access_token": PKM_ACCESS_TOKEN,
             "limit": 100,
         }
 
@@ -360,7 +360,7 @@ async def fetch_all_posts(db: Session = Depends(get_db)):
             return JSONResponse(content={"message": "No posts found."})
 
         # Process posts asynchronously
-        metrics = await process_posts_async(all_posts, BLT_ACCESS_TOKEN)
+        metrics = await process_posts_async(all_posts, PKM_ACCESS_TOKEN)
 
         # Store in database
         store_posts_and_metrics(all_posts, metrics, db)

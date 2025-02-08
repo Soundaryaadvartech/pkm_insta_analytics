@@ -8,8 +8,8 @@ load_dotenv()
 APP_ID = os.getenv("META_APP_ID")
 APP_SECRET = os.getenv("META_APP_SECRET")
 BASE_URL = os.getenv("BASE_URL")
-BLT_ACCESS_TOKEN = os.getenv("BLT_ACCESS_TOKEN")
-BLT_INSTAGRAM_ACCOUNT_ID = os.getenv("BLT_INSTAGRAM_ACCOUNT_ID")
+PKM_ACCESS_TOKEN = os.getenv("PKM_ACCESS_TOKEN")
+PKM_INSTAGRAM_ACCOUNT_ID = os.getenv("PKM_INSTAGRAM_ACCOUNT_ID")
 LONG_LIVED_TOKEN = os.getenv("LONG_LIVED_TOKEN")
 
 def refresh_access_token(app_id: str, app_secret: str, long_lived_token: str):
@@ -36,7 +36,7 @@ def is_access_token_expired(access_token: str) -> bool:
     Check if the access token has expired by making a test request to the Instagram API.
     Returns True if expired, False if valid.
     """
-    test_url = f"{BASE_URL}{BLT_INSTAGRAM_ACCOUNT_ID}?fields=id&access_token={BLT_ACCESS_TOKEN}"
+    test_url = f"{BASE_URL}{PKM_INSTAGRAM_ACCOUNT_ID}?fields=id&access_token={PKM_ACCESS_TOKEN}"
     response = requests.get(test_url)
    # Check for 401 Unauthorized (token expired)
     if response.status_code == 401:
@@ -62,7 +62,7 @@ def generate_new_long_lived_token() -> str:
     """
     try:
         load_dotenv()
-        short_lived_token = os.getenv("BLT_ACCESS_TOKEN")
+        short_lived_token = os.getenv("PKM_ACCESS_TOKEN")
 
         if not short_lived_token:
             raise Exception("Short-lived token not found in .env file.")
